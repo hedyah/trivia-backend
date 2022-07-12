@@ -3,7 +3,7 @@ from helper.dbhelpers import run_query
 from app import app
 import bcrypt
 
-@app.post('/api/trivia-user')
+@app.post('/api/client-trivia')
 def triviaUser_post():
     data = request.json
     email = data.get('email')
@@ -28,27 +28,22 @@ def triviaUser_post():
     
     #DB write
     run_query("INSERT INTO trivia_users (email, password, username, first_name, image_url) VALUE(?,?,?,?,?)", 
-                [email,password,username,first_name,image_url] )
+                [email,hash_result,username,first_name,image_url] )
     return jsonify("Post created sucessfully!"),200
 
-@app.get('/api/trivia-user')
+@app.get('/api/client-trivia')
 def triviaUser_get():
-    get_content = run_query("SELECT id, email, username, firstname, lastname, image_url from client WHERE id=?",[client_id])
+    get_content = run_query("SELECT * from trivia_users")
     resp = []
     for content in get_content:
-        obj ={}
+        obj = {}
         obj['id']= content[0]
         obj['email']= content[1]
-        obj['password']= content[2]
-        obj['username']= content[3]
-        obj['firstName']= content[4]
-        obj['lastName']= content[5]
-        obj['created_at']= content[6]
-        obj['image_url']= content[7]
+        obj['username']= content[2]
+        obj['firstName']= content[3]
+        obj['image_url']= content[4]
         resp.append(obj)
     if not get_content:
         return jsonify("Error ,couldn't process get request!"),422
-    
-    
-    return jsonify(resp),200
+    return jsonify(get_content),200
 

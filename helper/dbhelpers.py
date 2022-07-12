@@ -33,7 +33,7 @@ def disconnect_db(conn, cursor):
 
 
 
-def run_query(statement, args=None):
+def run_query(statement, args=[]):
     
     try:
         (conn, cursor) = conect_db()
@@ -52,7 +52,7 @@ def run_query(statement, args=None):
                 print("failed to instert")
     
     except mariadb.OperationalError as e:
-        print("got an operational error")
+        print(" You got an operational error")
         if ("access denied" in e.msg):
             print("failed to log in")
 
