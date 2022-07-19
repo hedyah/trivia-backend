@@ -1,3 +1,4 @@
+
 from flask import jsonify,request
 from helper.dbhelpers import run_query
 from app import app
@@ -35,16 +36,31 @@ def quiz_post():
     
     # quizz_id= run_query("SELECT quiz_id FROM quizzes WHERE quiz_name=?", [quiz_name])
 
-    return jsonify ("Post created sucessfully!"),200
+    return jsonify ("Created a quiz sucessfully!"),200
+
+# to activiate the quiz if there are a minimum of 8 questions
+@app.patch('/api/quizzes')
+def quiz_patch():
+    data = request.json
+    quiz_id = data.get('quiz_id')
+    
+    if not quiz_id:
+        return jsonify("Missing requires arguments: quiz_id"),422
+    #db write
+    run_query("UPDATE quizzes SET active = 1 WHERE id = ?", [quiz_id])
+    
+    return jsonify("Updated the quiz sucessfully! THe quiz is now active")
+
 
 @app.post('/api/questions')
 def questions_post():
     data = request.json
     trivia_question = data.get('trivia_question')
     image_url = data.get('image_url')
-    answer_content= data.get('answer_content')
-    image_answer_url = data.get('image_answer_url')
-    quiz_name = data.get('quiz_name')
+    answer_content= data.get('answer_content').get('answer')
+    answer_wrong= data.get('answer_wrong')
+    image_answer_url = data.get('answer_content').get('img')
+    quiz_id = data.get('quiz_id')
     
     if not answer_content:
         return jsonify("Missing requires arguments: answer_content"),422
@@ -53,31 +69,70 @@ def questions_post():
     if not image_url:
         return jsonify("Missing required argument : image_url"),422
     #db write
-    quiz_id= run_query("SELECT quiz_id FROM quizzes WHERE quiz_name=?", [quiz_name])
-    run_query("INSERT INTO questions (trivia_question,image_url, quiz_id) VALUE (?,?,?)", 
+    
+    question = run_query("INSERT INTO questions (trivia_question,image_url, quiz_id) VALUES (?,?,?)", 
                 [trivia_question,image_url, quiz_id])
     #db write
-    question_id = run_query("SELECT question_id FROM questions WHERE quiz_id=? ",[quiz_id])
-    run_query("INSERT INTO answers ( content,image_answer_url) VALUE(?,?)",
-                [answer_content,image_answer_url])
+    
+    run_query("INSERT INTO answers (content,image_answer_url, question_id, correct) VALUES(?,?,?,?)",
+                [answer_content,image_answer_url,question,1])
+    
+    for answer in answer_wrong:
+        ans_wrong= answer.get('answer')
+        img = answer.get('img')
+        run_query("INSERT INTO answers (content,image_answer_url, question_id, correct) VALUES(?,?,?,?)",[ans_wrong,img,question,0])
     
 
-    return jsonify ('Posted sucessfully',200)
+    return jsonify ('Created quiz questions sucessfully',200)
     
 
 
 
 
-@app.get('/api/trivia-quizzes')
+@app.get('/api/quizzes')
 def quiz_get():
-    get_content = run_query("SELECT * from questions")
+    quizzes= run_query("SELECT * From quizzes Where active=?",[1])
+    if quizzes == []:
+        return jsonify('NO Quizzes Active!')
+    get_content = run_query("SELECT * From quizzes")
+    resp = []
+    for content in quizzes:
+        obj = {}
+        obj['quiz_id']= content[0]
+        obj['quiz_name'] = content[1]
+        obj['points']= content[2]
+        obj['genre_id']=content[3]
+        obj['active']=content[4]
+        
+        resp.append(obj)
+    if not quizzes:
+        return jsonify("Error, couldn't reach your request!"),422
+    return jsonify(resp),200
+
+@app.get('/api/questions')
+def questions_get():
+    getquizid= run_query("SELECT id FROM quizzes")
+    get_content = run_query("SELECT id, trivia_question, image_url, quiz_id FROM questions ")
     resp = []
     for content in get_content:
         obj = {}
-        obj['id']= content[0]
-        obj['triviaQuestion'] = content[1]
+        obj['question_id']= content[0]
+        obj['question'] = content[1]
         obj['image_url']= content[2]
+        obj['quiz_id']=content[3]
+
+        
+        obj['answers']=[]
+        answers = run_query("SELECT id, content, correct, image_answer_url FROM answers WHERE question_id=?",[content[0]])
+        for answer in answers:
+            answer_obj= {}
+            answer_obj['answer_id']=answer[0]
+            answer_obj['answer']=answer[1]
+            answer_obj['correct']=answer[2]
+            answer_obj['image_answer_url']=answer[3]
+            obj['answers'].append(answer_obj)
         resp.append(obj)
+    
     if not get_content:
         return jsonify("Error, couldn't reach your request!"),422
     return jsonify(resp),200

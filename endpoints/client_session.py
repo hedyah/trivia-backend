@@ -6,7 +6,7 @@ from app import app
 
 
 #client_session API
-@app.post('/api/user-session')
+@app.post('/api/client-session')
 def userSession_post():
     
     data = request.json
@@ -28,10 +28,20 @@ def userSession_post():
     run_query("INSERT INTO user_session (token,user_id) VALUES(?,?)",[create_token, user_id])
     #if it matches create a session token with uuid.uuid4
     
-    return jsonify("User loggin in!"),200
+    return jsonify([create_token]),200
 
-@app.delete('/api/user-session')
+@app.delete('/api/client-session')
 def userSession_delete():
-    data= request.json
-    user_id = data.get('user_id')
-    run_query("DELETE FROM user_session WHERE user_id=?",[user_id])
+    
+    headers = request.headers
+    tokens = headers.get("token")
+    if not tokens :
+        
+         return jsonify("Token is missing"),401
+    
+    checkuser = run_query("DELETE FROM user_session WHERE token=?", [tokens])
+    if checkuser == []:
+          return jsonify("user not found!"),401
+    # client_id = checkuser[0][0]
+    
+    return jsonify("User logged out!"),200

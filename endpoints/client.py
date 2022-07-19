@@ -3,7 +3,7 @@ from helper.dbhelpers import run_query
 from app import app
 import bcrypt
 
-@app.post('/api/client-trivia')
+@app.post('/api/client')
 def triviaUser_post():
     data = request.json
     email = data.get('email')
@@ -28,12 +28,22 @@ def triviaUser_post():
     
     #DB write
     run_query("INSERT INTO trivia_users (email, password, username, first_name, image_url) VALUE(?,?,?,?,?)", 
-                [email,hash_result,username,first_name,image_url] )
+                [email,password,username,first_name,image_url] )
     return jsonify("Post created sucessfully!"),200
 
-@app.get('/api/client-trivia')
+@app.get('/api/client')
 def triviaUser_get():
-    get_content = run_query("SELECT * from trivia_users")
+    headers = request.headers
+    tokens = headers.get("token")
+    if not tokens :
+        
+        return jsonify("user is not authorized"),401
+    
+    checkuser = run_query("SELECT user_id FROM user_session WHERE token=?", [tokens])
+    if checkuser == []:
+        return jsonify("user does not have access!"),401
+    client_id = checkuser[0][0]
+    get_content = run_query("SELECT id,email,username,first_Name,image_url from trivia_users WHERE id=?",[client_id])
     resp = []
     for content in get_content:
         obj = {}
@@ -45,5 +55,5 @@ def triviaUser_get():
         resp.append(obj)
     if not get_content:
         return jsonify("Error ,couldn't process get request!"),422
-    return jsonify(get_content),200
+    return jsonify(resp),200
 

@@ -47,7 +47,8 @@ def run_query(statement, args=[]):
             cursor.execute(statement, args)
             if cursor.rowcount == 1:
                 conn.commit()
-                print("insert sucessful")
+                print("Insert sucessful")
+                return cursor.lastrowid
             else:
                 print("failed to instert")
     
