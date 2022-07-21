@@ -3,6 +3,7 @@ from helper.dbhelpers import run_query
 from app import app
 import bcrypt
 
+#to create a user
 @app.post('/api/client')
 def triviaUser_post():
     data = request.json
@@ -31,6 +32,7 @@ def triviaUser_post():
                 [email,password,username,first_name,image_url] )
     return jsonify("Post created sucessfully!"),200
 
+#to get the user information
 @app.get('/api/client')
 def triviaUser_get():
     headers = request.headers

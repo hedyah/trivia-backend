@@ -5,7 +5,7 @@ import uuid
 from app import app
 
 
-#client_session API
+#client_session API login
 @app.post('/api/client-session')
 def userSession_post():
     
@@ -30,6 +30,7 @@ def userSession_post():
     
     return jsonify([create_token]),200
 
+#for the client to log out
 @app.delete('/api/client-session')
 def userSession_delete():
     

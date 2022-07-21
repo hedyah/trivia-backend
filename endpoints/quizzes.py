@@ -3,6 +3,7 @@ from flask import jsonify,request
 from helper.dbhelpers import run_query
 from app import app
 
+#to create a quiz
 @app.post('/api/quizzes')
 def quiz_post():
     # headers = request.headers
@@ -36,9 +37,9 @@ def quiz_post():
     
     # quizz_id= run_query("SELECT quiz_id FROM quizzes WHERE quiz_name=?", [quiz_name])
 
-    return jsonify ("Created a quiz sucessfully!"),200
+    return jsonify ("Created Quiz sucessfully!"),200
 
-# to activiate the quiz if there are a minimum of 8 questions
+# to activiate the quiz if there are a minimum of 5 questions
 @app.patch('/api/quizzes')
 def quiz_patch():
     data = request.json
@@ -47,11 +48,12 @@ def quiz_patch():
     if not quiz_id:
         return jsonify("Missing requires arguments: quiz_id"),422
     #db write
-    run_query("UPDATE quizzes SET active = 1 WHERE id = ?", [quiz_id])
     
-    return jsonify("Updated the quiz sucessfully! THe quiz is now active")
+    run_query("UPDATE quizzes SET active=1 WHERE id=?", [quiz_id])
+    
+    return jsonify("Updated the quiz sucessfully! THe quiz is now active"),200
 
-
+#to create questions and answers
 @app.post('/api/questions')
 def questions_post():
     data = request.json
@@ -88,7 +90,7 @@ def questions_post():
 
 
 
-
+#to grab all the quizzes
 @app.get('/api/quizzes')
 def quiz_get():
     quizzes= run_query("SELECT * From quizzes Where active=?",[1])
@@ -109,10 +111,12 @@ def quiz_get():
         return jsonify("Error, couldn't reach your request!"),422
     return jsonify(resp),200
 
+#to grab all the questions and answers
 @app.get('/api/questions')
 def questions_get():
-    getquizid= run_query("SELECT id FROM quizzes")
-    get_content = run_query("SELECT id, trivia_question, image_url, quiz_id FROM questions ")
+
+    
+    get_content = run_query("SELECT id, trivia_question, image_url, quiz_id FROM questions")
     resp = []
     for content in get_content:
         obj = {}

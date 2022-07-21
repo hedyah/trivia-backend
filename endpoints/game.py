@@ -37,10 +37,11 @@ def game_post():
     #when the user finishes the quiz then insert the score into the scoreboard
     #DB write
     else:
-        run_query("INSERT INTO scoreboard (user_id, quiz_id, points) VALUE(?,?,?)",
+        run_query("INSERT INTO scoreboard (user_id, quiz_id, points) VALUES(?,?,?)",
                 [user_id,quiz_id,points])
         return jsonify ({"correct":True}),200
     
+#the scoreboard for the game 
 @app.get('/api/game')
 def get_score():
     get_content = run_query("SELECT scoreboard.id, points, user_id, quiz_id, trivia_users.id, username FROM scoreboard INNER JOIN trivia_users ON scoreboard.user_id=trivia_users.id")
